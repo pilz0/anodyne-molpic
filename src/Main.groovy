@@ -25,15 +25,16 @@ import org.openscience.cdk.isomorphism.Pattern
 
 class Main {
 static void main(String [] args) {
+System.setProperty('java.awt.headless', 'true')
 def cli = new CliBuilder(usage: 'groovy Main.groovy [options]')
-cli.m(longOpt: 'molecule', args: 1, 'Molecule SMILES')
-cli.s(longOpt: 'salt', args: 1, 'Salt SMILES')
+cli.m(longOpt:  'molecule', args: 1, 'Molecule SMILES')
+cli.s(longOpt:  'salt', args: 1, 'Salt SMILES')
 cli.am(longOpt: 'amine-count', args: 1, 'Amine count')
 cli.ac(longOpt: 'acid-count', args: 1, 'Salt count')
-cli.r(longOpt: 'reaction', args: 1, 'Reaction SMILES')
-cli.o(longOpt: 'output', args: 1, 'Output file')
-cli.d(longOpt: 'debug-file', args: 1, 'Debug file')
-cli.v(longOpt: 'verbose', 'Enable verbose mode')
+cli.r(longOpt:  'reaction', args: 1, 'Reaction SMILES')
+cli.o(longOpt:  'output', args: 1, 'Output file')
+cli.d(longOpt:  'debug-file', args: 1, 'Debug file')
+cli.v(longOpt:  'verbose', 'Enable verbose mode')
 
 def options = cli.parse(args)
 if (!options) {
@@ -81,11 +82,20 @@ if (options.r) target = sp.parseReactionSmiles(options.r)
 def sdg = new StructureDiagramGenerator()
 
 def substitutions = [
+	//[fame: "morp",                             smiles: "C1C=CC2=C(C=1)CCCC2"],
+	[fame: "morp",                             smiles: "C2C=CC1CCC3=C(C1C2)C=CC=C3"],
+	//[name: "morphinan",                        smiles: "C=1C=CC2=C(C1)CC3NCCC24CCCCC34"],
+	[name: "morphinan",                        smiles: "C2C=CC1C3CC4=C(C1(C2)CCN3C)C=CC=C4", its: new String[] { "morp" }, nself: true, ntarg: true, bany: false],
+
 	[lame: "3,4-methylenedioxyphenethylamine", smiles: "C1OC2=C(O1)C=C(C=C2)CCN"],
 	[lame: "cathinone",                        smiles: "CC(C(=O)C1=CC=CC=C1)N"],
 
 	[name: "thiobarbiturate",                  smiles: "O=C1NC(=S)NC(=O)C1", rot: 60, flipx: true],
 	[name: "barbiturate",                      smiles: "C1(C(=O)NC(=O)NC1=O)", rot: -60, flipx: true],
+
+	[fame: "indop",                            smiles: "C1CC2=CC=CC=C2CC1N", bany: true ],
+	[name: "lysergamide",                      smiles: "NC(=O)C1CN(C2CC3=CNC4=CC=CC(=C34)C2=C1)C", its: new String[] { "indop" }, nself: true, flipx: true, flipy: true],
+	[name: "ergoline",                         smiles: "C1CC2C(CC3=CNC4=CC=CC2=C34)NC1", its: new String[] { "indop" }, bany: true, nself: true, flipx: true, flipy: true],
 
 	[name: "β-carboline",                      smiles: "C1=CC=C2C(=C1)C3=C(N2)C=NC=C3", bany: true],
 	[name: "hexahydroazepinoindole",           smiles: "C1CNCCC2=C1C3=CC=CC=C3N2", rot: -18, bany: true, flipx: true, flipy: true],
@@ -96,14 +106,21 @@ def substitutions = [
 
 	[name: "naphthylaminopropane",             smiles: "CC(CC1=CC2=CC=CC=C2C=C1)N", amph: true],
 
-	[fame: "phen",                             smiles: "OCC(C1CCCCN1)C2=CC=CC=C2", its: new String[] { "2-benzylpiperidine" }, amph: false, nself: true],
+	//[fame: "phen",                             smiles: "OCC(C1CCCCN1)C2=CC=CC=C2", its: new String[] { "2-benzylpiperidine" }, amph: false, nself: true],
+	[fame: "phen",                             smiles: "OCC(C1CCCCN1)C=2C=CC=CC2", its: new String[] { "2-benzylpiperidine" }, amph: false, nself: true],
 	[fame: "naphphen",                         smiles: "COCC(C1CCCCN1)C2=CC3=CC=CC=C3C=C2", its: new String[] { "2-benzylpiperidine" }, amph: false, nself: true],
 	[name: "phenidate",                        smiles: "OC(=O)C(C1CCCCN1)C2=CC3=CC=CC=C3C=C2", its: new String[] { "2-benzylpiperidine", "naphphen"}, amph: false, nself: true],
-	[name: "phenidate",                        smiles: "OC(=O)C(C1CCCCN1)C2=CC=CC=C2", its: new String[] { "2-benzylpiperidine", "phen"}, amph: false, nself: true],
+	//[name: "phenidate",                        smiles: "OC(=O)C(C1CCCCN1)C2=CC=CC=C2", its: new String[] { "2-benzylpiperidine", "phen"}, amph: false, nself: true],
+	[name: "phenidate",                        smiles: "OC(=O)C(C1CCCCN1)C=2C=CC=CC2", its: new String[] { "2-benzylpiperidine", "phen"}, amph: false, nself: true],
 
 	[name: "2-benzylpyrrolidine",              smiles: "C1CNC(C1)CC2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: false],
-	[name: "2-benzylpiperidine",               smiles: "C1CCNC(C1)CC2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: false, flipy: true],
+	//[name: "2-benzylpiperidine",               smiles: "C1CCNC(C1)CC2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: false, flipy: true],
+	[name: "2-benzylpiperidine",               smiles: "C(C1CCCCN1)C=2C=CC=CC2", its: new String[] { "sphenethylamine", "amphetamine" }, amph: false, flipy: true],
 	[name: "2-benzylpiperazine",               smiles: "N1CCNC(C1)CC2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: false, flipy: true],
+
+	[name: "2-phenylmorpholine",               smiles: "CC1C(OCCN1)C2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: true, rot: -60, flipy: true],
+	[name: "2-phenylmorpholine",               smiles: "C1COC(CN1)C2=CC=CC=C2", its: new String[] { "phenethylamine" } ],
+
 	[name: "3-benzylmorpholine",               smiles: "C1COCC(N1)CC2=CC=CC=C2", its: new String[] { "phenethylamine", "amphetamine" }, amph: false, flipx: true],
 
 	[fame: "methylphenethylamine",             smiles: "C1=CC=C(C=C1)CCNC", flipy: true, bany: false],
@@ -112,6 +129,8 @@ def substitutions = [
 
 	[name: "1,2-diarylethylamine",             smiles: "C1=CC=C(C=C1)CC(C2=CC=CC=C2)NC" , its: new String[] { "phenethylamine", "methamphetamine" }, amph: false, nself: true],
 	[name: "1,2-diarylethylamine",             smiles: "C1=CC=C(C=C1)CC(C2=CC=CC=C2)N" , its: new String[] { "phenethylamine" }, amph: false],
+
+	[name: "phenethylpiperidine",              smiles: "C1=CC=C(C=C1)CCN2CCCCC2", its: new String[] { "phenethylamine" }],
 
 	[name: "piperidinophenone",                smiles: "CC(C(=O)C1=CC=CC=C1)N2CCCCC2", its: new String[] { "phenethylamine" }, amph: true],
 	[name: "pyrrolidinophenone",               smiles: "CC(C(=O)C1=CC=CC=C1)N2CCCC2", its: new String[] { "phenethylamine" }, amph: true],
@@ -125,8 +144,8 @@ def substitutions = [
 	[name: "cathinone",                        smiles: "CC1=CC=CC=C1C(=O)C(C)N", flipx: true, its: new String[] { "oramph", "phenethylamine" }, amph: true],
 	[name: "cathinone",                        smiles: "CC1=CC(=CC=C1)C(=O)C(C)N", its: new String[] { "metamph", "sphenethylamine"}, amph: true],
 
-	[name: "amphetamine",                        smiles: "CC1=CC=CC=C1CC(C)N", flipx: true, its: new String[] { "oramph", "phenethylamine" }, amph: true],
-	[name: "amphetamine",                        smiles: "CC1=CC(=CC=C1)CC(C)N", its: new String[] { "metamph", "sphenethylamine"}, amph: true],
+	[name: "amphetamine",                      smiles: "CC1=CC=CC=C1CC(C)N", flipx: true, its: new String[] { "oramph", "phenethylamine" }, amph: true],
+	[name: "amphetamine",                      smiles: "CC1=CC(=CC=C1)CC(C)N", its: new String[] { "metamph", "sphenethylamine"}, amph: true],
 
 	[name: "cathinone",                        smiles: "CC(C(=O)C1=CC=CC=C1)NC", its: new String[] { "methylphenethylamine" }, amph: true],
 	[name: "cathinone",                        smiles: "CC(C(=O)C1=CC=CC=C1)N", its: new String[] { "phenethylamine" }, amph: true],
@@ -140,9 +159,9 @@ def substitutions = [
 	[name: "2-aminoindane",                    smiles: "C1C(CC2=CC=CC=C21)N", bany: true ],
 
 	//[name: "phenylethanolamine",               smiles: "CC(CC1=CC=CC=C1)N", its: new String[] { "phenethylamine" }, amph: true],
-	[name: "phentermine",                      smiles: "CC(C)(CC1=CC=CC=C1)N", its: new String[] { "phenethylamine" } ],
+	[name: "phentermine",                      smiles: "CC(C)(CC1=CC=CC=C1)N", its: new String[] { "phenethylamine" }],
 
-	[name: "amphetamine",                      smiles: "CC(CC1=CC=CC=C1)N", its: new String[] { "phenethylamine" }, amph: true],
+	[name: "amphetamine",                      smiles: "CC(CC1=CC=CC=C1)N", nself: true, its: new String[] { "phenethylamine" }, amph: true],
 
 	[name: "phenylethanolamine",               smiles: "C1=CC=C(C=C1)C(CN)O", its: new String[] { "phenethylamine" }],
 
@@ -174,6 +193,8 @@ def substitutions = [
 	[name: "cyclohexylamine",                  smiles: "C1CCC(CC1)N", flipx: true, flipy: true],
 
 	[name: "phenol",                           smiles: "C1=CC=C(C=C1)O", rot: 60],
+	[fame: "gabaol",                           smiles: "OCCCCN"],
+	[name: "gabapentinoid",                    smiles: "C(CC(=O)O)CN", its: new String[] { "gabaol"}, flipx: true],
 ]
 
 def classes = []
@@ -190,6 +211,8 @@ for (sub in substitutions) {
 for (sub in substitutions) {
 	if (sub.pattern.match(target).length > 0 && sub.fame == null) {
 		if (sub.its) {
+			//if (sub.nself == null)
+			//	sub.nself = true
 			IAtomContainer lsubst = null
 			Pattern lpattern = null
 			for (it in sub.its) {
@@ -219,17 +242,19 @@ for (sub in substitutions) {
 				else
 					sdg.generateCoordinates(sub.mol)
 			} else {
-				if (sub.nself == true)
-					sdg.generateAlignedCoordinates(target, lsubst, lpattern)
-				else
+				if (sub.nself == true) {
+					if (sub.ntarg != true) sdg.generateAlignedCoordinates(target, lsubst, lpattern)
+				} else {
 					sdg.generateAlignedCoordinates(sub.mol, lsubst, lpattern)
+				}
 			}
 		} else {
 			if (sub.lame == null) {
-				if (sub.nself == true)
-					sdg.generateCoordinates(target)
-				else
+				if (sub.nself == true) {
+					if (sub.ntarg != true) sdg.generateCoordinates(target)
+				} else {
 					sdg.generateCoordinates(sub.mol)
+				}
 			}
 		}
 		if (sub.lame == null) {

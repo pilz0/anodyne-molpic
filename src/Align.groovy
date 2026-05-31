@@ -128,7 +128,7 @@ class Align {
 					bond.setDisplay(disp)
 					set = true
 				}
-				if (set == false) {
+				if (set == false && orig != null) {
 					orig.setStereo(ster) //
 					orig.setDisplay(disp) //
 				}

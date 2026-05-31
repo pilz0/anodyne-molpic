@@ -1,0 +1,97 @@
+plugins {
+    id 'groovy'
+}
+
+// ---------------------------------------------------------------------------
+// Molpic build — replaces build_jar.sh.
+//
+// The dependencies below are the exact artifacts that were hand-dropped into
+// lib/, now declared by their real Maven coordinates and pinned to the same
+// versions. `gradle jar` compiles src/*.groovy against them and packs an
+// executable fat jar (molpic.jar, Main-Class: Main), as the script did.
+// ---------------------------------------------------------------------------
+
+repositories {
+    mavenCentral()
+    // Offline fallback to the vendored jars if a coordinate ever can't resolve:
+    // flatDir { dirs 'lib' }
+}
+
+ext {
+    cdkVersion    = '2.11'
+    groovyVersion = '3.0.25'
+}
+
+dependencies {
+    // --- Chemistry Development Kit (org.openscience.cdk:*:2.11) -------------
+    implementation "org.openscience.cdk:cdk-atomtype:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-core:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-data:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-depict:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-dict:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-interfaces:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-io:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-isomorphism:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-render:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-renderawt:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-renderbasic:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-sdg:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-smiles:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-standard:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-structgen:$cdkVersion"
+    implementation "org.openscience.cdk:cdk-bundle:$cdkVersion"
+
+    // --- CDK runtime deps that were also vendored in lib/ ------------------
+    implementation 'uk.ac.ebi.beam:beam-core:1.3.10'   // SMILES (beam) backend
+    implementation 'javax.vecmath:vecmath:1.5.2'       // 2D/3D coordinate math
+
+    // --- CLI parsing -------------------------------------------------------
+    implementation 'commons-cli:commons-cli:1.5.0'
+
+    // --- Groovy (compiler + runtime, bundled into the fat jar) -------------
+    implementation "org.codehaus.groovy:groovy:$groovyVersion"
+    implementation "org.codehaus.groovy:groovy-cli-commons:$groovyVersion"
+    implementation "org.codehaus.groovy:groovy-json:$groovyVersion"
+}
+
+// The sources are flat .groovy files in src/ (default package), not the Gradle
+// default of src/main/groovy — point the groovy source set straight at them.
+sourceSets {
+    main {
+        groovy { srcDirs = ['src'] }
+        resources { srcDirs = [] }
+    }
+}
+
+jar {
+    archiveFileName = 'molpic.jar'
+    destinationDirectory = projectDir          // land molpic.jar in the repo root, as before
+
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+
+    // Fold every runtime dependency into one runnable artifact (the old
+    // "extract each lib jar into tmp_jar then re-jar" step).
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    // Overlapping module-info / metadata / service files across CDK + Groovy:
+    // keep the first, skip the rest. Drop signatures that merging would void.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+// Convenience runner, e.g.:
+//   gradle run -PappArgs="-v -m 'CC(C)(CC1=CC=CC=C1)N' -o phentermine.svg"
+tasks.register('run', JavaExec) {
+    group = 'application'
+    description = 'Run Main from the compiled classes.'
+    dependsOn 'classes'
+    mainClass = 'Main'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('appArgs')) {
+        args(project.getProperty('appArgs').toString().split('\\s+'))
+    }
+}

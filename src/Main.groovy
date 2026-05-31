@@ -26,6 +26,7 @@ import org.openscience.cdk.isomorphism.Pattern
 class Main {
 static void main(String [] args) {
 System.setProperty('java.awt.headless', 'true')
+
 def cli = new CliBuilder(usage: 'groovy Main.groovy [options]')
 cli.h(longOpt:  'help', 'Show this help message')
 cli.m(longOpt:  'molecule', args: 1, 'Molecule SMILES')
@@ -34,6 +35,7 @@ cli.am(longOpt: 'amine-count', args: 1, 'Amine count')
 cli.ac(longOpt: 'acid-count', args: 1, 'Salt count')
 cli.r(longOpt:  'reaction', args: 1, 'Reaction SMILES')
 cli.o(longOpt:  'output', args: 1, 'Output file')
+cli.si(longOpt: 'sixel', 'Display as sixel')
 cli.d(longOpt:  'debug-file', args: 1, 'Debug file')
 cli.v(longOpt:  'verbose', 'Enable verbose mode')
 
@@ -68,7 +70,7 @@ if (options.v) {
 	if (amine_count) println "Salt Amine Count: ${amine_count}"
 	if (acid_count) println "Salt Acid Count: ${acid_count}"
 	if (options.r) println "Reaction: ${options.r}"
-	println "Output: ${options.o ?: 'molecule.svg'}"
+	// if (options.o) println "Output: ${options.o ?: 'molecule.svg'}"
 	// println "Verbose: ${options.v}"
 }
 
@@ -213,7 +215,36 @@ new File(options.o ?: "molecule.svg").withWriter("UTF-8") { writer ->
 	writer.write(svg)
 }
 
-println "Rendered to ${options.o ?: 'molecule.svg'}"
+if (options.si) {
+	def svgFile = options.o ?: "molecule.svg"
+	def magick = ["magick", "convert"].find { bin ->
+		try { ["which", bin].execute().waitFor() == 0 } catch (ignored) { false }
+	}
+	if (!magick) {
+		System.err.println "sixel: ImageMagick (magick/convert) not found on PATH"
+	} else if (["which", "img2sixel"].execute().waitFor() != 0) {
+		System.err.println "sixel: img2sixel (libsixel) not found on PATH"
+	} else {
+		def png = File.createTempFile("molpic", ".png")
+		try {
+			// SVG -> PNG via ImageMagick, cropped to the occupied area, capped at 500x250 (aspect preserved)
+			def convert = [magick, "-background", "white", svgFile, "-flatten", "-fuzz", "1%", "-trim", "+repage", "-resize", "500x250>", png.absolutePath]
+			def cp = convert.execute()
+			def cerr = new StringBuffer()
+			cp.consumeProcessErrorStream(cerr)
+			cp.waitFor()
+			if (cp.exitValue() != 0) {
+				System.err.println "sixel: SVG->PNG conversion failed:\n${cerr}"
+			} else {
+				// PNG -> sixel, streamed to the terminal
+				def sp2 = ["img2sixel", png.absolutePath].execute()
+				sp2.waitForProcessOutput(System.out, System.err)
+			}
+		} finally {
+			png.delete()
+		}
+	}
+}
 
 def json_data = [
 	svg: svg,

@@ -27,6 +27,7 @@ class Main {
 static void main(String [] args) {
 System.setProperty('java.awt.headless', 'true')
 def cli = new CliBuilder(usage: 'groovy Main.groovy [options]')
+cli.h(longOpt:  'help', 'Show this help message')
 cli.m(longOpt:  'molecule', args: 1, 'Molecule SMILES')
 cli.s(longOpt:  'salt', args: 1, 'Salt SMILES')
 cli.am(longOpt: 'amine-count', args: 1, 'Amine count')
@@ -39,6 +40,10 @@ cli.v(longOpt:  'verbose', 'Enable verbose mode')
 def options = cli.parse(args)
 if (!options) {
 	println "failed to parse options"
+	return
+}
+if (options.h) {
+	cli.usage()
 	return
 }
 if (!options.m && !options.r) {

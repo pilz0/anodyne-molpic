@@ -1,6 +1,7 @@
 {
-  description = "Minimal example of building Kotlin with Gradle and Nix";
-
+  nixConfig = {
+    allow-import-from-derivation = true;
+  };
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";

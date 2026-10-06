@@ -1,2 +1,16 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+// Repositories live here (not in build.gradle) so the Nix build can swap them
+// for its pre-fetched offline repository.
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+}
+
 rootProject.name = 'molpic'
-startParameter.offline=false

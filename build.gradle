@@ -12,12 +12,6 @@ plugins {
 // executable fat jar (molpic.jar, Main-Class: Main), as the script did.
 // ---------------------------------------------------------------------------
 
-repositories {
-    mavenCentral()
-    // Offline fallback to the vendored jars if a coordinate ever can't resolve:
-    // flatDir { dirs 'lib' }
-}
-
 ext {
     cdkVersion    = '2.11'
     groovyVersion = '3.0.25'

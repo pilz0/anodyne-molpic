@@ -62,6 +62,14 @@ sourceSets {
     }
 }
 
+// Name the Groovy compiler classpath explicitly instead of letting Gradle infer
+// it from a "groovy-<version>.jar" file name: in the Nix build the jars are
+// symlinks to /nix/store/<hash>-groovy-<version>.jar, which Gradle resolves
+// before matching, so inference fails with "no Groovy Jar was found".
+tasks.withType(GroovyCompile).configureEach {
+    groovyClasspath = configurations.compileClasspath
+}
+
 jar {
     archiveFileName = 'molpic.jar'
     destinationDirectory = projectDir          // land molpic.jar in the repo root, as before

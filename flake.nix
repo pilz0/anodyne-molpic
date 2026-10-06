@@ -4,8 +4,9 @@
   inputs = { 
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    flake-utils.inputs.systems.follows = "systems";
     build-gradle-application.url = "github:raphiz/buildGradleApplication";
+    systems.url = "github:nix-systems/triplet";
+    flake-utils.inputs.systems.follows = "systems";
   };
   outputs = { self, systems, nixpkgs, build-gradle-application, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -17,9 +18,16 @@
           src = ./.;
         };
       in {
+        hydraJobs = {
+          inherit (self)
+            packages
+            ;
+        };
         devShells.default = pkgs.mkShell {
           packages = [
             molpic
+            pkgs.imagemagick
+            pkgs.libsixel
           ];
         };
         packages.default = molpic;

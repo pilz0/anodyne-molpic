@@ -26,7 +26,7 @@
           overlays = [ build-gradle-application.overlays.default ];
         };
         molpic = pkgs.buildGradleApplication {
-          pname = "anodyne-molpic";
+          pname = "molpic";
           version = "0.1.0";
           src = ./.;
         };
@@ -41,7 +41,7 @@
         };
         packages = {
           default = molpic;
-          anodyne-molpic = molpic;
+          molpic = molpic;
         };
         formatter = pkgs.nixfmt-tree;
       }

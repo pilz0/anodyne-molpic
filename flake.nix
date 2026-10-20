@@ -35,6 +35,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             molpic
+            pkgs.gradle
             pkgs.imagemagick
             pkgs.libsixel
           ];
